@@ -49,3 +49,49 @@ const propertyCount = (function propertyChecks(E){
  return checks;
 })(E);
 console.log(propertyCount + ' seeded invariant checks passed');
+
+const v2Count = (function expandedChecks(E){
+ let n=0;function check(x,msg){if(!x)throw Error(msg);n++}
+ check(E.scenarios.length===6,"six missions");check(E.controls.length===24,"24 controls");check(E.threats.length===16,"16 threats");
+ for(const list of [E.controls,E.threats,E.scenarios,E.routes])check(new Set(list.map(x=>x.id)).size===list.length,"unique IDs");
+ const allIds=new Set(E.controls.map(c=>c.id));
+ for(const t of E.threats)for(const group of [t.prevent,t.contain,t.recover])for(const rule of group)for(const item of rule)check(item.startsWith("@")||item.startsWith("!")?E.routes.some(r=>r.id===item.slice(1)):allIds.has(item),"valid threat rule "+item);
+ for(const s of E.scenarios){
+  for(const id of s.threats)check(E.threats.some(t=>t.id===id),"valid mission threat");
+  for(const m of E.modes){
+   const sc=E.mission(s.id,m.id);check(sc.budget===Math.round(s.budget*m.factor),"difficulty budget");check(sc.target===m.target,"difficulty target");
+   check(E.key(sc)===(m.id==="standard"?s.id:s.id+"-"+m.id),"distinct save key");
+   const blank=E.empty();check(!E.verifyRoutes(blank,sc).ok,"segmentation dependency");
+   for(const p of E.presets){
+    const d=E.blueprint(p.id,sc);check(E.cost(d)<=sc.budget,"preset budget");check(d.controls.length>0,"nonempty template");
+    const encoded=E.exportDesign(d,sc),result=E.importDesign(JSON.parse(JSON.stringify(encoded)));
+    check(result&&result.scenario.id===sc.id&&result.scenario.difficulty===sc.difficulty,"import mission and mode");
+    check(result.design.controls.every(c=>d.controls.includes(c))&&E.cost(result.design)===E.cost(d),"round-trip design");
+    const a=E.insights(d,sc);check(a.objectives.length===5,"objective count");check(a.maturity.reduce((v,g)=>v+g.installed,0)===d.controls.length,"coverage count");
+    check(a.risk.every((t,i)=>i===0||a.risk[i-1].loss>=t.loss),"risk ordering");
+    check(a.exposure.open+a.exposure.verified+a.exposure.denied===E.routes.length,"route accounting");
+    check(a.improvement===a.report.score-E.evaluate(blank,sc).score,"baseline comparison");
+    check(a.efficiency===Math.round(a.improvement*100/E.cost(d))/100,"efficiency");
+    if(a.recommendation){const rec=a.recommendation,next=E.change(d,sc,rec.kind,rec.id,"verified");check(next.ok,"affordable recommendation");check(E.evaluate(next.design,sc).score-a.report.score===rec.gain&&rec.gain>0,"accurate recommendation")}
+   }
+   const segmented=E.change(blank,sc,"control","seg").design,verified=E.verifyRoutes(segmented,sc);check(verified.ok,"verify all");
+   check(E.routes.every(r=>verified.design.routes[r.id]===(E.required(r,sc)?"verified":"denied")),"enforce required and deny optional");
+   check(E.evaluate(verified.design,sc).availability===100,"verified business continuity");
+   const over={...sc,budget:25};check(!E.verifyRoutes(segmented,over).ok,"no partial bulk change");
+   check(E.evaluateOne(blank,sc,"not-real")===null,"invalid threat");
+   for(const t of E.threats){const actual=E.evaluateOne(blank,sc,t.id);check(actual.status==="Compromised"&&actual.loss===t.weight,"single threat baseline")}
+  }
+ }
+ const budget={...E.mission("bank"),budget:1000};
+ for(const t of E.threats){
+  for(const [type,sets] of [["Prevented",t.prevent],["Contained",t.contain],["Recovered",t.recover]])for(const set of sets){
+   let d=E.empty();for(const item of set){if(item.startsWith("@")||item.startsWith("!")){if(!d.controls.includes("seg"))d=E.change(d,budget,"control","seg").design;d=E.change(d,budget,"route",item.slice(1),item.startsWith("@")?"verified":"denied").design}else if(!d.controls.includes(item))d=E.change(d,budget,"control",item).design}
+   const actual=E.evaluateOne(d,budget,t.id);const rank=["Compromised","Recovered","Contained","Prevented"];check(rank.indexOf(actual.status)>=rank.indexOf(type),"rule produces outcome "+t.id);
+  }
+ }
+ const sc=E.mission("studio"),raw=E.exportDesign(E.empty(),sc);
+ for(const bad of [null,{}, {...raw,version:1},{...raw,mission:"unknown"},{...raw,difficulty:"bad"},{...raw,design:{controls:["bogus"],routes:raw.design.routes}},{...raw,design:{controls:["mfa","mfa"],routes:raw.design.routes}},{...raw,design:{controls:E.controls.map(c=>c.id),routes:raw.design.routes}},{...raw,design:{controls:[],routes:{...raw.design.routes,"staff-app":"bad"}}},{...raw,design:{controls:[],routes:{...raw.design.routes,extra:"open"}}}])check(E.importDesign(bad)===null,"reject invalid design");
+ check(E.blueprint("unknown",sc)===null,"unknown preset");
+ return n;
+})(E);
+console.log(v2Count + ' expanded feature checks passed');
