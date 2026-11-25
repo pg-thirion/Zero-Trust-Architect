@@ -108,6 +108,10 @@ async function main(){
   check(await page.locator('[data-control][aria-pressed="true"]').count()===1,"redo");
   await page.locator("#undo").click();
   await page.locator("#c-mfa").click();
+  await page.keyboard.press("Control+z");
+  check(await page.locator("#budget").textContent()==="$128k","keyboard undo");
+  await page.keyboard.press("Control+Shift+z");
+  check(await page.locator("#budget").textContent()==="$110k","keyboard redo");
   await page.locator("#control-filter").selectOption("installed");
   check(await page.locator("[data-control]").count()===1,"installed filter");
   await page.locator("#clear-filters").click();
@@ -165,6 +169,9 @@ async function main(){
   await page.locator("#import-design").setInputFiles({name:"invalid.json",mimeType:"application/json",buffer:Buffer.from('{"version":2,"mission":"invalid"}')});
   await page.waitForFunction(()=>document.getElementById("notice").textContent.includes("Invalid design"));
   check(await page.locator("#r-staff-app").inputValue()==="verified","invalid import no changes");
+  await page.locator("#import-design").setInputFiles({name:"oversize.json",mimeType:"application/json",buffer:Buffer.alloc(65537,32)});
+  await page.waitForFunction(()=>document.getElementById("notice").textContent.includes("64 KB limit"));
+  check(await page.locator("#r-staff-app").inputValue()==="verified","oversized import no changes");
   page.once("dialog",d=>d.accept());
   await page.locator("#import-design").setInputFiles({name:"valid.json",mimeType:"application/json",buffer:Buffer.from(exported)});
   await page.waitForFunction(()=>document.getElementById("notice").textContent.includes("Design imported successfully"));
