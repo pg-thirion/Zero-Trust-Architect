@@ -20,7 +20,7 @@
  }
  function renderBudget(){const spent=E.cost(design),remaining=scenario.budget-spent,percent=100*spent/scenario.budget;
   $("budget").textContent=fmt(remaining);$("spent").textContent=fmt(spent)+" / "+fmt(scenario.budget);
-  $("budget-bar").style.width=percent+"%";$("budget-bar").classList.toggle("low",remaining<12);$("budget-meter").setAttribute("aria-valuenow",String(Math.round(percent)));
+  $("budget-meter").value=spent;$("budget-meter").max=scenario.budget;$("budget-meter").classList.toggle("low",remaining<12);
   $("controls-count").textContent=design.controls.length+" / "+E.controls.length;
   $("policy-count").textContent=E.routes.filter(r=>design.routes[r.id]==="verified").length+" / "+E.routes.length;
   $("best").textContent=best[scenario.id]===undefined?"—":best[scenario.id]+"/100";
@@ -45,7 +45,7 @@
   const r=report;
   const grade=r.score>=90?"Exceptional":r.score>=75?"Resilient":r.score>=55?"Developing":"High risk";
   const summary=["Prevented","Contained","Recovered","Compromised"].map(status=>`<span class="summary-item ${status.toLowerCase()}"><strong>${r.results.filter(t=>t.status===status).length}</strong> ${status}</span>`).join("");
-  area.innerHTML=`<div class="score-grid"><div class="score-main"><span>ARCHITECTURE SCORE</span><strong>${r.score}<small>/100</small></strong><span>${grade}</span></div><div class="score-side"><div><span>Security</span><strong>${r.security}%</strong><div class="mini-track"><i style="width:${r.security}%"></i></div></div><div><span>Business availability</span><strong>${r.availability}%</strong><div class="mini-track"><i style="width:${r.availability}%"></i></div></div></div></div><div class="result-summary">${summary}</div>${r.broken.length?`<div class="warning">Disrupted services: ${r.broken.join(", ")}. Restore required routes with verified access.</div>`:"<div class=\"success-note\">All required business routes remain available.</div>"}<div class="incident-list">${r.results.map(t=>`<details class="incident"><summary><span class="incident-dot ${t.status.toLowerCase()}"></span><span><strong>${t.name}</strong><small>${t.entry} · impact ${t.weight}</small></span><span class="result-tag ${t.status.toLowerCase()}">${t.status}</span></summary><div class="incident-detail"><p>${t.matched.length?"Effective controls: "+t.matched.map(E.label).join(", "):"Suggested prevention: "+t.prevent[0].map(E.label).join(" + ")}</p><p>${t.lesson}</p></div></details>`).join("")}</div><p class="fine">Run ${runs} · ${fmt(r.spent)} invested · Score weights: 75% security, 25% availability.</p>`;
+  area.innerHTML=`<div class="score-grid"><div class="score-main"><span>ARCHITECTURE SCORE</span><strong>${r.score}<small>/100</small></strong><span>${grade}</span></div><div class="score-side"><div><span>Security</span><strong>${r.security}%</strong><progress class="mini-track" max="100" value="${r.security}" aria-label="Security score"></progress></div><div><span>Business availability</span><strong>${r.availability}%</strong><progress class="mini-track" max="100" value="${r.availability}" aria-label="Business availability"></progress></div></div></div><div class="result-summary">${summary}</div>${r.broken.length?`<div class="warning">Disrupted services: ${r.broken.join(", ")}. Restore required routes with verified access.</div>`:"<div class=\"success-note\">All required business routes remain available.</div>"}<div class="incident-list">${r.results.map(t=>`<details class="incident"><summary><span class="incident-dot ${t.status.toLowerCase()}"></span><span><strong>${t.name}</strong><small>${t.entry} · impact ${t.weight}</small></span><span class="result-tag ${t.status.toLowerCase()}">${t.status}</span></summary><div class="incident-detail"><p>${t.matched.length?"Effective controls: "+t.matched.map(E.label).join(", "):"Suggested prevention: "+t.prevent[0].map(E.label).join(" + ")}</p><p>${t.lesson}</p></div></details>`).join("")}</div><p class="fine">Run ${runs} · ${fmt(r.spent)} invested · Score weights: 75% security, 25% availability.</p>`;
   $("export").disabled=false;
  }
  function render(){renderMission();renderBudget();renderControls();renderMap();renderReport()}
@@ -57,4 +57,5 @@
  $("export").addEventListener("click",exportReport);
  $("reset").addEventListener("click",()=>{if(!confirm("Reset this mission's current architecture? Your best score will be retained."))return;design=E.empty();report=null;dirty=false;runs=0;save();render();notice("Architecture reset.")});
  render();
+ $("boot-message").hidden=true;
 })();
