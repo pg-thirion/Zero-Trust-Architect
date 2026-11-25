@@ -1,7 +1,7 @@
 name: Test application
 on:
   push:
-    branches: [main]
+    branches: [main, release/v2]
   pull_request:
     branches: [main]
   workflow_dispatch:
