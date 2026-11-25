@@ -1,54 +1,51 @@
 # Zero Trust Architect
 
-A defensive cybersecurity strategy game for the browser. Design a fictional company network, allocate a limited budget and assess the design against simulated threats.
+A dependency-free, defensive cybersecurity strategy game for the browser. Design a fictional company network, allocate a limited budget and evaluate the architecture against simulated incidents.
+
+**Production:** https://zero-trust-architect.vercel.app/
 
 ## Play locally
 
-Clone this repository and serve its root with a static server:
+Clone the repository and run `python -m http.server 8000` from the root. Visit http://localhost:8000. No build step, runtime dependencies, credentials, API keys or backend are required.
 
-```sh
-python -m http.server 8000
-```
+## Version 2
 
-Visit http://localhost:8000. No build step, dependencies, credentials, API keys or backend are required.
-
-## Missions
-
-| Company | Scenario | Fictional budget |
+| Mission | Sector | Standard budget |
 | --- | --- | --- |
 | Northstar Studio | Small business | $128k |
 | Meridian Health | Healthcare | $175k |
 | Atlas Commerce | Enterprise | $205k |
+| Harbour University | Education | $195k |
+| Cobalt Finance | Financial services | $245k |
+| Ironwood Manufacturing | Industrial enterprise | $225k |
 
-Choose from 14 security controls across identity, endpoints, network, data protection and monitoring. Configure six routes between six network zones. Verified access costs $4k per route and requires microsegmentation to be enforced. Denying a required route damages business availability.
+There are 18 mission/difficulty combinations: Training (125% budget, 70-point target), Standard (100%, 75-point target) and Expert (80%, 80-point target). Every combination has independent saved designs, personal bests, history and checkpoints. The original v1 standard-mode saves are compatible.
 
-The eight fictional incident types cover compromised credentials, privileged account abuse, compromised suppliers, ransomware, application flaws, exfiltration, stolen storage and backup tampering.
+### Gameplay and analysis
 
-The score is 75% security and 25% business availability. Threat loss is weighted by impact: prevented = 0%, contained = 35%, recovered = 65%, compromised = 100%. Results are deterministic. Per-mission designs and best scores are stored locally in the browser. Reports can be exported as plain text.
+- 24 controls across five security domains, with six network zones and six configurable routes.
+- 16 threat types, a full mission assessment and an individual threat laboratory.
+- Four budget-aware strategy templates, bulk verification of required routes and denial of optional routes.
+- Live projected score, projected security and availability, baseline comparison, investment efficiency and best single affordable upgrade.
+- Five mission objectives, residual-risk register, control coverage by domain and route exposure summary.
+- Catalogue search, category filter, installed/affordable filter, cost/name sorting and filter reset.
+- Undo and redo (50 changes per session), including keyboard shortcuts.
+- Saved checkpoint, comparison, restore and delete; portable JSON design export and validated import (64 KB limit).
+- Last 20 assessments per mission/difficulty, five achievements based on retained history, history clearing with personal best preserved.
+- Text assessment and CSV risk register downloads, expandable learning glossary.
+
+The score is 75% security and 25% availability. Weighted loss: prevented = 0%, contained = 35%, recovered = 65%, compromised = 100%. Verified access costs $4k per route and requires microsegmentation; denying a critical route damages availability. The forecast and recommendation are based on the same deterministic model; the recommendation evaluates single upgrades, not a globally optimal architecture. Individual threat tests do not affect scores or history.
 
 ## Tests
 
 ```sh
 node tests.js
-```
-
-The regression suite covers budgets, input sanitisation, threat outcomes, route enforcement, control dependencies and state immutability. It also runs seeded invariant checks against 1,500 generated designs.
-
-To run the real-browser checks, install Google Chrome and the pinned development-only test tool:
-
-```sh
 npm install --no-save --no-package-lock --ignore-scripts playwright-core@1.56.1
 node browser-tests.cjs
 ```
 
-The browser suite checks desktop and mobile layouts, gameplay, report downloads, persistence, malformed saved data, reset and console errors.
+Chrome is required for browser tests. The test suite exercises original and expanded simulation logic, all difficulty/mission combinations, threat rules, import validation, deterministic scoring, budget invariants, UI interactions, exports, storage and desktop/mobile layouts (320, 390, 1024, 1440px). CI runs on main, pull requests and the v2 release branch. Vercel runs the engine suite before building and publishes only the five runtime files.
 
-## Deploy
+## Security and limitations
 
-For GitHub Pages, open **Settings > Pages > Build and deployment > Source** and select **GitHub Actions**. The `Test and publish to GitHub Pages` workflow runs syntax checks, simulation tests and real-browser tests before publishing the five runtime files. It can also be triggered manually from the Actions tab. No secrets or environment variables are needed.
-
-The expected public URL is https://pg-thirion.github.io/Zero-Trust-Architect/. The site can also be hosted on any static hosting platform.
-
-## Limitations
-
-This is a simplified educational simulation, not a real security assessment or a claim of compliance with a security framework. It does not scan, attack or connect to real networks. Game costs and threat weights are fictional. Browser storage is local and is not synced across devices.
+The site uses a restrictive content security policy and HTTP security headers. No runtime API calls are made. All data remains local to the user's browser unless they export a file. The simulation is an educational simplification, not a real network assessment or compliance certification. Costs, threat impact weights and companies are fictional. Undo/redo history is session-local; saved scores and designs are not synchronised across devices.
