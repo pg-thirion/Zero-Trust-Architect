@@ -20,7 +20,7 @@ console.log(count + " engine checks passed");
 const propertyCount = (function propertyChecks(E){
  let checks=0,seed=42013;
  function assert(condition,message){if(!condition)throw Error(message);checks++}
- function rand(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n}
+ function rand(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return (seed>>>8)%n}
  for(const s of E.scenarios){
   const baseline=E.empty();
   assert(E.evaluate(E.sanitise({controls:["posture"]},s),s).results.find(x=>x.id==="phish").status==="Compromised","device compliance alone must not stop credential compromise");
