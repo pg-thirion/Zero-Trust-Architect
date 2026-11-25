@@ -1,0 +1,57 @@
+name: Test and publish to GitHub Pages
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and simulation regression tests
+        run: |
+          node --check engine.js
+          node --check app.js
+          node --check browser-tests.cjs
+          node tests.js
+      - name: Browser end-to-end tests
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright-core@1.56.1
+          node browser-tests.cjs
+      - name: Prepare minimal public site
+        run: |
+          mkdir public
+          cp index.html engine.js app.js styles.css favicon.svg public/
+      - name: Upload tested website
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4
