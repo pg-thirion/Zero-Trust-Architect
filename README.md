@@ -32,11 +32,22 @@ The score is 75% security and 25% business availability. Threat loss is weighted
 node tests.js
 ```
 
-The regression suite covers budgets, input sanitisation, threat outcomes, route enforcement, control dependencies and state immutability.
+The regression suite covers budgets, input sanitisation, threat outcomes, route enforcement, control dependencies and state immutability. It also runs seeded invariant checks against 1,500 generated designs.
+
+To run the real-browser checks, install Google Chrome and the pinned development-only test tool:
+
+```sh
+npm install --no-save --no-package-lock --ignore-scripts playwright-core@1.56.1
+node browser-tests.cjs
+```
+
+The browser suite checks desktop and mobile layouts, gameplay, report downloads, persistence, malformed saved data, reset and console errors.
 
 ## Deploy
 
-Use GitHub Pages with main and the repository root as the publishing source, or any static hosting platform. No secrets or environment variables are needed.
+For GitHub Pages, open **Settings > Pages > Build and deployment > Source** and select **GitHub Actions**. The `Test and publish to GitHub Pages` workflow runs syntax checks, simulation tests and real-browser tests before publishing the five runtime files. It can also be triggered manually from the Actions tab. No secrets or environment variables are needed.
+
+The expected public URL is https://pg-thirion.github.io/Zero-Trust-Architect/. The site can also be hosted on any static hosting platform.
 
 ## Limitations
 
