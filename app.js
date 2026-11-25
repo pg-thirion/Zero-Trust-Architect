@@ -54,7 +54,7 @@
  document.addEventListener("change",e=>{if(e.target.dataset.route){const id=e.target.dataset.route;edit("route",id,e.target.value);$("r-"+id).focus()}});
  $("run").addEventListener("click",run);
  $("export").addEventListener("click",exportReport);
- $("reset").addEventListener("click",()=>{if(!confirm("Reset this mission's current architecture? Your best score will be retained."))return;applyDesign(E.empty(),"Architecture reset.");dirty=false;runs=0;render()});
+ $("reset").addEventListener("click",()=>{if(!confirm("Reset this mission's current architecture? Your best score will be retained."))return;applyDesign(E.empty(),"Architecture reset.");report=null;dirty=false;runs=0;$("threat-preview").textContent="Choose a threat and run an individual test.";render();notice("Architecture reset.")});
 
  function safeHistory(raw,s){return Array.isArray(raw)?raw.slice(0,20).filter(x=>x&&["score","security","availability","spent","objectives"].every(k=>Number.isInteger(x[k]))&&x.score>=0&&x.score<=100&&x.security>=0&&x.security<=100&&x.availability>=0&&x.availability<=100&&x.spent>=0&&x.spent<=s.budget&&x.objectives>=0&&x.objectives<=5).map(({score,security,availability,spent,objectives})=>({score,security,availability,spent,objectives})):[]}
  function same(a,b){return E.cost(a)===E.cost(b)&&a.controls.length===b.controls.length&&a.controls.every(c=>b.controls.includes(c))&&E.routes.every(r=>a.routes[r.id]===b.routes[r.id])}
