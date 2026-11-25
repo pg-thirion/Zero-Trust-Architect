@@ -16,3 +16,36 @@ const count = (function test(E){
  check(E.sanitise(null,s).controls.length===0,"invalid save");return n;
 })(E);
 console.log(count + " engine checks passed");
+
+const propertyCount = (function propertyChecks(E){
+ let checks=0,seed=42013;
+ function assert(condition,message){if(!condition)throw Error(message);checks++}
+ function rand(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n}
+ for(const s of E.scenarios){
+  const baseline=E.empty();
+  assert(E.evaluate(E.sanitise({controls:["posture"]},s),s).results.find(x=>x.id==="phish").status==="Compromised","device compliance alone must not stop credential compromise");
+  for(let i=0;i<500;i++){
+   let d=E.empty();
+   for(let j=0;j<25;j++){
+    const control=rand(2)===0;
+    const id=control?E.controls[rand(E.controls.length)].id:E.routes[rand(E.routes.length)].id;
+    const input=JSON.stringify(d);
+    const next=E.change(d,s,control?"control":"route",id,["open","verified","denied"][rand(3)]);
+    assert(JSON.stringify(d)===input,"change cannot mutate prior design");
+    if(next.ok)d=next.design;
+    assert(E.cost(d)>=0&&E.cost(d)<=s.budget,"budget invariant");
+   }
+   const r=E.evaluate(d,s);
+   assert(r.score>=0&&r.score<=100&&r.security>=0&&r.security<=100&&r.availability>=0&&r.availability<=100,"score bounds");
+   assert(r.score===Math.round(r.security*.75+r.availability*.25),"weighted score");
+   assert(r.spent===E.cost(d),"report cost");
+   assert(JSON.stringify(E.evaluate(d,s))===JSON.stringify(r),"deterministic results");
+   assert(JSON.stringify(E.sanitise(d,s).routes)===JSON.stringify(d.routes),"route persistence");
+   assert(E.cost(E.sanitise(d,s))===E.cost(d),"control persistence");
+   assert(r.results.every(x=>["Prevented","Contained","Recovered","Compromised"].includes(x.status)&&x.loss>=0&&x.loss<=x.weight),"valid outcomes");
+   if(!d.controls.includes("seg"))assert(r.availability===100,"advisory policies cannot cause outages");
+  }
+ }
+ return checks;
+})(E);
+console.log(propertyCount + ' seeded invariant checks passed');
